@@ -6,6 +6,9 @@
 //! (GhostChain Core, GWallet, GhostBridge) and Zig-based execution layers like GhostPlane.
 
 pub mod client;
+pub mod clients;
+pub mod transport;
+pub mod auth;
 pub mod ffi;
 pub mod ghostplane;
 pub mod rvm;
@@ -16,6 +19,9 @@ pub mod types;
 
 // Re-export commonly used types
 pub use client::*;
+pub use clients::*;
+pub use transport::*;
+pub use auth::*;
 pub use cns::CNSClient;
 pub use ghostplane::GhostPlaneClient;
 pub use error::{EtherlinkError, Result};

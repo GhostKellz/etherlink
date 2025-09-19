@@ -11,6 +11,7 @@ pub enum EtherlinkError {
     Status(#[from] tonic::Status),
 
     #[error("QUIC connection error: {0}")]
+    #[cfg(feature = "quic-quinn")]
     Quic(#[from] quinn::ConnectionError),
 
     #[error("Serialization error: {0}")]
@@ -39,4 +40,10 @@ pub enum EtherlinkError {
 
     #[error("General error: {0}")]
     General(#[from] anyhow::Error),
+
+    #[error("Cryptographic error: {0}")]
+    Crypto(String),
+
+    #[error("API error: {0}")]
+    Api(String),
 }

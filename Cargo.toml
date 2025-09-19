@@ -17,11 +17,14 @@ tonic = { version = "0.12", features = ["tls", "transport"] }
 tonic-build = "0.12"
 prost = "0.13"
 
-# QUIC implementations
+# GhostChain QUIC implementation
+gquic = { git = "https://github.com/ghostkellz/gquic", optional = true }
+
+# Fallback QUIC implementations
 quinn = { version = "0.11", optional = true }
 quiche = { version = "0.23", optional = true }
 
-# HTTP/3 and transport (disabled for now due to compatibility issues)
+# HTTP/3 and QUIC transport (disabled for compatibility)
 # h3 = "0.0.6"
 # h3-quinn = "0.0.7"
 
@@ -39,23 +42,50 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # FFI and C interop for Zig bridge
 libc = "0.2"
 
-# Crypto (placeholder for gcrypt integration)
+# GhostChain crypto implementation
+gcrypt = { git = "https://github.com/ghostkellz/gcrypt", optional = true }
+
+# Fallback crypto implementations
 sha2 = "0.10"
-ed25519-dalek = "2.0"
+ed25519-dalek = { version = "2.0", optional = true }
+blake3 = "1.5"
+secp256k1 = { version = "0.28", optional = true }
+
+# HTTP client for REST APIs
+hyper = { version = "0.14", features = ["client", "http1", "http2", "tcp"], optional = true }
+hyper-tls = { version = "0.5", optional = true }
+reqwest = { version = "0.11", features = ["json", "rustls-tls"], optional = true }
+
+# Additional GhostChain ecosystem crates
+ghostbridge = { git = "https://github.com/ghostkellz/ghostbridge", optional = true }
+jarvis = { git = "https://github.com/ghostkellz/jarvis", optional = true }
 
 # Config and utilities
 config = "0.14"
 uuid = { version = "1.0", features = ["v4"] }
 hex = "0.4"
 chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+rand = "0.8"
 
 [build-dependencies]
 tonic-build = "0.12"
 
+[dev-dependencies]
+wiremock = "0.5"
+tokio-test = "0.4"
+
 [features]
-default = ["quic-quinn"]
+default = ["rest-client", "fallback-crypto"]
+gquic = ["dep:gquic"]
+gcrypt = ["dep:gcrypt"]
 quic-quinn = ["quinn"]
 quic-quiche = ["quiche"]
+rest-client = ["reqwest", "hyper"]
+tls = ["hyper-tls"]
+ghostbridge = ["dep:ghostbridge"]
+jarvis = ["dep:jarvis"]
+fallback-crypto = ["ed25519-dalek", "secp256k1"]
 
 [lib]
 name = "etherlink"

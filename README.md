@@ -1,128 +1,36 @@
-<div align="center">
-  <img src="assets/etherlink-logo.png" alt="Etherlink" width="200"/>
+# Etherlink - GhostChain Rust Client SDK
 
-# Etherlink
-
-**A Rust-native bridge and gRPC client powering GhostChain’s hybrid Rust ↔ Zig ecosystem.**
+A high-performance Rust client SDK for the GhostChain ecosystem, providing secure and efficient communication with all GhostChain services using GQUIC transport and comprehensive authentication.
 
 ![Rust](https://img.shields.io/badge/language-Rust-orange?logo=rust)
 ![gRPC](https://img.shields.io/badge/protocol-gRPC-blue?logo=grpc)
 ![QUIC](https://img.shields.io/badge/transport-QUIC%2FHTTP3-teal?logo=quic)
-![FFI](https://img.shields.io/badge/FFI-Rust%20%2B%20Zig-purple?logo=zig)
 ![License](https://img.shields.io/badge/license-Apache--2.0-lightgrey)
 
-</div>
+## 🚀 Features
 
----
+### Complete Service Coverage
+- **GHOSTD** - Blockchain daemon client (port 8545)
+- **WALLETD** - Wallet management service (port 8548)
+- **GID** - Ghost Identity system (port 8552)
+- **CNS** - Crypto Name Server (port 8553)
+- **GSIG** - Signature verification service (port 8554)
+- **GLEDGER** - Token ledger operations (port 8555)
 
-## 🌉 Overview
+### Advanced Transport Layer
+- **GQUIC** - High-performance QUIC transport from [gquic](https://github.com/ghostkellz/gquic)
+- **HTTP/REST** - Fallback HTTP transport for compatibility
+- **Connection pooling** and automatic retry with exponential backoff
+- **TLS/SSL** support with certificate validation
 
-**Etherlink** is the secure and performant **Rust ↔ Zig bridge layer** for the GhostChain ecosystem.  
-It provides a **Rust gRPC client** and **FFI abstraction** that allows Rust-based services (GhostChain Core, GhostWallet, GhostBridge) to safely interoperate with Zig-based execution layers like **GhostPlane**.
+### Authentication & Security
+- **Guardian Framework** - Zero-trust policy-based authentication
+- **Multi-algorithm crypto** - Ed25519, Secp256k1, BLS12-381 via [gcrypt](https://github.com/ghostkellz/gcrypt)
+- **Token-based permissions** - Fine-grained access control
+- **DID-compatible** identity management
 
-Etherlink ensures **safe memory boundaries**, **async communication**, and **cross-language consistency** for blockchain and virtual machine execution.
-
----
-
-## 🏗️ Architecture
-
-```text
-┌──────────────┐   gRPC/QUIC   ┌──────────────┐   Rust FFI   ┌─────────────┐
-│   CNS (Zig)  │──────────────▶│  Etherlink   │────────────▶ │ GhostChain  │
-│   GhostPlane │   Execution   │  (Rust)      │   Safe API   │  Core + gwallet
-└──────────────┘               └──────────────┘              └─────────────┘
-                                        │
-                                        ▼
-                                   RVM / rEVM
-                              (Rust VMs & Execution)
-
-🔑 Core Responsibilities
-🦀 Rust-Side (Etherlink)
-
-gRPC/QUIC client to communicate with GhostChain Core (ghostd)
-
-Safe Rust APIs for transaction submission, state queries, and contract calls
-
-Async wrappers for Zig-based GhostPlane execution
-
-Integration with RVM/rEVM for contract execution
-
-⚡ Zig-Side (GhostPlane)
-
-High-performance L2 execution engine in Zig
-
-Stateless settlement and ultra-fast contract execution
-
-Communicates with Etherlink via gRPC and FFI hooks
-
-🔒 Safety Guarantees
-
-FFI Boundary Management: Rust owns types and memory, Zig only receives safe handles
-
-Zero-Trust Defaults: All cross-language calls validated
-
-Async + QUIC: Reliable, multiplexed communication channels
-
-
-🔗 Integration Targets
-
-Etherlink plugs directly into the GhostChain Core ecosystem:
-
-ghostd — Node daemon (consensus, networking, state)
-
-gwallet — Wallet daemon for accounts, signing, transactions
-
-rvm — Rust Virtual Machine (native bytecode execution)
-
-revm — Rust Ethereum VM compatibility module
-
-ghostplane — Zig-based L2 execution engine
-
-cns — Cryptographic Name Service (replaces ZNS)
-
-🚀 Features
-
-✅ Rust gRPC client with QUIC/HTTP3 transport
-
-✅ Zig FFI bridge with safe abstractions
-
-✅ Cross-runtime execution (Rust VMs + Zig GhostPlane)
-
-✅ Unified crypto stack via gcrypt
-
-✅ Async APIs for transactions, queries, and contract calls
-
-✅ Secure by default — TLS enforced, zero-copy buffers
-
-📦 Repository Layout
-etherlink/
-├── Cargo.toml          # Rust workspace config
-├── src/
-│   ├── client.rs       # gRPC/QUIC client
-│   ├── ffi.rs          # Zig FFI layer
-│   ├── ghostplane.rs   # GhostPlane abstractions
-│   ├── rvm.rs          # RVM integration
-│   ├── revm.rs         # rEVM integration
-│   └── cns.rs          # Cryptographic Name Service hooks
-├── proto/              # gRPC .proto files
-├── examples/           # Usage demos
-├── tests/              # Integration + property tests
-└── docs/               # Architecture and specs
-
-🧭 Roadmap
-
- gRPC client for GhostChain Core
-
- QUIC multiplexing layer (replace legacy DERP/WebSocket)
-
- FFI bindings to GhostPlane (Zig)
-
- Safe async execution wrappers
-
- RVM/rEVM integration
-
- CNS (Cryptographic Name Service) support
-
- End-to-end integration test suite
-
-✨ Etherlink — Bridging Ghosts and Machines, Rust and Zig.
+### Token Economy Integration
+- **GCC (⚡)** - Gas & transaction fees (deflationary)
+- **SPIRIT (🗳️)** - Governance & voting (fixed supply)
+- **MANA (✨)** - Utility & rewards (inflationary)
+- **GHOST (👻)** - Brand & collectibles (burn-to-mint)
