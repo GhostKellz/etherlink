@@ -1,0 +1,315 @@
+syntax = "proto3";
+
+package ghostchain.v1;
+
+import "google/protobuf/empty.proto";
+
+// GhostChain Core gRPC API
+service GhostChainService {
+  // Blockchain operations
+  rpc GetBlockchainInfo(google.protobuf.Empty) returns (BlockchainInfo);
+  rpc GetBlock(GetBlockRequest) returns (Block);
+  rpc GetTransaction(GetTransactionRequest) returns (Transaction);
+  rpc SubmitTransaction(SubmitTransactionRequest) returns (SubmitTransactionResponse);
+
+  // Account operations
+  rpc GetAccount(GetAccountRequest) returns (Account);
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc GetNonce(GetNonceRequest) returns (GetNonceResponse);
+
+  // Contract operations
+  rpc DeployContract(DeployContractRequest) returns (DeployContractResponse);
+  rpc CallContract(CallContractRequest) returns (CallContractResponse);
+  rpc EstimateGas(EstimateGasRequest) returns (EstimateGasResponse);
+
+  // Token operations (4-token economy)
+  rpc GetTokenBalance(GetTokenBalanceRequest) returns (GetTokenBalanceResponse);
+  rpc TransferTokens(TransferTokensRequest) returns (TransferTokensResponse);
+
+  // Consensus and validation
+  rpc GetValidators(google.protobuf.Empty) returns (GetValidatorsResponse);
+  rpc GetConsensusInfo(google.protobuf.Empty) returns (ConsensusInfo);
+
+  // Streaming endpoints
+  rpc SubscribeNewBlocks(google.protobuf.Empty) returns (stream Block);
+  rpc SubscribeTransactions(TransactionSubscription) returns (stream Transaction);
+  rpc SubscribeEvents(EventSubscription) returns (stream Event);
+
+  // Health and status
+  rpc HealthCheck(google.protobuf.Empty) returns (HealthResponse);
+  rpc GetNodeInfo(google.protobuf.Empty) returns (NodeInfo);
+}
+
+// Blockchain information
+message BlockchainInfo {
+  string chain_id = 1;
+  uint64 latest_block_height = 2;
+  string latest_block_hash = 3;
+  uint64 total_transactions = 4;
+  uint64 active_validators = 5;
+  string consensus_algorithm = 6;
+  map<string, string> metadata = 7;
+}
+
+// Block structure
+message Block {
+  string hash = 1;
+  uint64 height = 2;
+  string parent_hash = 3;
+  uint64 timestamp = 4;
+  string proposer = 5;
+  repeated Transaction transactions = 6;
+  string state_root = 7;
+  string transactions_root = 8;
+  uint64 gas_used = 9;
+  uint64 gas_limit = 10;
+  bytes signature = 11;
+  map<string, string> metadata = 12;
+}
+
+// Transaction structure
+message Transaction {
+  string hash = 1;
+  string from = 2;
+  string to = 3;
+  uint64 value = 4;
+  bytes data = 5;
+  uint64 gas_limit = 6;
+  uint64 gas_price = 7;
+  uint64 nonce = 8;
+  TransactionType tx_type = 9;
+  TokenType token_type = 10;
+  bytes signature = 11;
+  TransactionStatus status = 12;
+  uint64 block_height = 13;
+  string block_hash = 14;
+  uint64 gas_used = 15;
+  repeated Event events = 16;
+}
+
+// Account information
+message Account {
+  string address = 1;
+  uint64 nonce = 2;
+  map<string, uint64> token_balances = 3;  // token_type -> balance
+  string code_hash = 4;
+  string storage_root = 5;
+  bool is_contract = 6;
+  map<string, string> metadata = 7;
+}
+
+// Event structure
+message Event {
+  string address = 1;
+  repeated string topics = 2;
+  bytes data = 3;
+  uint64 block_height = 4;
+  string transaction_hash = 5;
+  uint32 log_index = 6;
+}
+
+// Validator information
+message Validator {
+  string address = 1;
+  string public_key = 2;
+  uint64 voting_power = 3;
+  bool is_active = 4;
+  uint64 total_delegated = 5;
+  double commission_rate = 6;
+  string moniker = 7;
+  string website = 8;
+}
+
+// Node information
+message NodeInfo {
+  string node_id = 1;
+  string version = 2;
+  string network = 3;
+  repeated string listen_addresses = 4;
+  uint64 uptime_seconds = 5;
+  uint32 peer_count = 6;
+  bool is_validator = 7;
+  map<string, string> metadata = 8;
+}
+
+// Consensus information
+message ConsensusInfo {
+  string algorithm = 1;
+  uint64 current_round = 2;
+  uint64 current_height = 3;
+  uint32 validator_count = 4;
+  double participation_rate = 5;
+  uint64 average_block_time_ms = 6;
+}
+
+// Health response
+message HealthResponse {
+  string status = 1;
+  string version = 2;
+  uint64 uptime_seconds = 3;
+  uint64 last_block_height = 4;
+  uint64 last_block_time = 5;
+  bool is_synced = 6;
+  map<string, string> metadata = 7;
+}
+
+// Request messages
+message GetBlockRequest {
+  oneof identifier {
+    uint64 height = 1;
+    string hash = 2;
+  }
+  bool include_transactions = 3;
+}
+
+message GetTransactionRequest {
+  string hash = 1;
+}
+
+message SubmitTransactionRequest {
+  Transaction transaction = 1;
+  bool wait_for_confirmation = 2;
+  uint32 confirmation_timeout_ms = 3;
+}
+
+message SubmitTransactionResponse {
+  string transaction_hash = 1;
+  bool accepted = 2;
+  string error_message = 3;
+  uint64 block_height = 4;  // If wait_for_confirmation = true
+}
+
+message GetAccountRequest {
+  string address = 1;
+}
+
+message GetBalanceRequest {
+  string address = 1;
+  TokenType token_type = 2;
+}
+
+message GetBalanceResponse {
+  uint64 balance = 1;
+  TokenType token_type = 2;
+}
+
+message GetNonceRequest {
+  string address = 1;
+}
+
+message GetNonceResponse {
+  uint64 nonce = 1;
+}
+
+message DeployContractRequest {
+  string deployer = 1;
+  bytes bytecode = 2;
+  bytes constructor_args = 3;
+  uint64 gas_limit = 4;
+  uint64 value = 5;
+  TokenType payment_token = 6;
+}
+
+message DeployContractResponse {
+  string transaction_hash = 1;
+  string contract_address = 2;
+  bool success = 3;
+  string error_message = 4;
+}
+
+message CallContractRequest {
+  string caller = 1;
+  string contract_address = 2;
+  bytes method_data = 3;
+  uint64 gas_limit = 4;
+  uint64 value = 5;
+  bool is_view = 6;  // Read-only call
+}
+
+message CallContractResponse {
+  bytes return_data = 1;
+  uint64 gas_used = 2;
+  bool success = 3;
+  string error_message = 4;
+  string transaction_hash = 5;  // If not a view call
+}
+
+message EstimateGasRequest {
+  string from = 1;
+  string to = 2;
+  bytes data = 3;
+  uint64 value = 4;
+}
+
+message EstimateGasResponse {
+  uint64 gas_estimate = 1;
+}
+
+message GetTokenBalanceRequest {
+  string address = 1;
+  TokenType token_type = 2;
+}
+
+message GetTokenBalanceResponse {
+  uint64 balance = 1;
+  TokenType token_type = 2;
+}
+
+message TransferTokensRequest {
+  string from = 1;
+  string to = 2;
+  uint64 amount = 3;
+  TokenType token_type = 4;
+  uint64 gas_limit = 5;
+  bytes signature = 6;
+}
+
+message TransferTokensResponse {
+  string transaction_hash = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message GetValidatorsResponse {
+  repeated Validator validators = 1;
+  uint64 total_voting_power = 2;
+}
+
+message TransactionSubscription {
+  repeated string addresses = 1;  // Filter by addresses
+  repeated TransactionType tx_types = 2;  // Filter by transaction types
+}
+
+message EventSubscription {
+  repeated string addresses = 1;  // Contract addresses
+  repeated string topics = 2;     // Event topics
+}
+
+// Enumerations
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  TRANSACTION_TYPE_TRANSFER = 1;
+  TRANSACTION_TYPE_CONTRACT_CALL = 2;
+  TRANSACTION_TYPE_CONTRACT_DEPLOY = 3;
+  TRANSACTION_TYPE_STAKE = 4;
+  TRANSACTION_TYPE_UNSTAKE = 5;
+  TRANSACTION_TYPE_GOVERNANCE = 6;
+  TRANSACTION_TYPE_CNS_REGISTER = 7;
+  TRANSACTION_TYPE_CNS_UPDATE = 8;
+}
+
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0;
+  TRANSACTION_STATUS_PENDING = 1;
+  TRANSACTION_STATUS_CONFIRMED = 2;
+  TRANSACTION_STATUS_FAILED = 3;
+  TRANSACTION_STATUS_REJECTED = 4;
+}
+
+enum TokenType {
+  TOKEN_TYPE_UNSPECIFIED = 0;
+  TOKEN_TYPE_GCC = 1;     // Gas & transaction fees
+  TOKEN_TYPE_SPIRIT = 2;  // Governance & voting
+  TOKEN_TYPE_MANA = 3;    // Utility & rewards
+  TOKEN_TYPE_GHOST = 4;   // Brand & collectibles
+}

@@ -1,0 +1,341 @@
+syntax = "proto3";
+
+package ghostplane.v1;
+
+import "google/protobuf/empty.proto";
+
+// GhostPlane L2 gRPC API
+service GhostPlaneService {
+  // L2 transaction operations
+  rpc SubmitL2Transaction(SubmitL2TransactionRequest) returns (SubmitL2TransactionResponse);
+  rpc GetL2Transaction(GetL2TransactionRequest) returns (L2Transaction);
+  rpc GetL2TransactionStatus(GetL2TransactionStatusRequest) returns (L2TransactionStatusInfo);
+
+  // L2 block operations
+  rpc GetL2Block(GetL2BlockRequest) returns (L2Block);
+  rpc GetLatestL2Block(google.protobuf.Empty) returns (L2Block);
+
+  // State operations
+  rpc GetL2State(GetL2StateRequest) returns (L2StateResponse);
+  rpc QueryL2Storage(QueryL2StorageRequest) returns (QueryL2StorageResponse);
+
+  // Batch operations
+  rpc CreateBatch(CreateBatchRequest) returns (CreateBatchResponse);
+  rpc GetBatch(GetBatchRequest) returns (Batch);
+  rpc FinalizeBatch(FinalizeBatchRequest) returns (FinalizeBatchResponse);
+
+  // ZK proof operations
+  rpc GenerateProof(GenerateProofRequest) returns (GenerateProofResponse);
+  rpc VerifyProof(VerifyProofRequest) returns (VerifyProofResponse);
+
+  // Bridge operations (L1 ↔ L2)
+  rpc DepositFromL1(DepositFromL1Request) returns (DepositFromL1Response);
+  rpc WithdrawToL1(WithdrawToL1Request) returns (WithdrawToL1Response);
+  rpc GetBridgeStatus(GetBridgeStatusRequest) returns (BridgeStatus);
+
+  // Streaming endpoints
+  rpc SubscribeL2Blocks(google.protobuf.Empty) returns (stream L2Block);
+  rpc SubscribeL2Transactions(L2TransactionSubscription) returns (stream L2Transaction);
+  rpc SubscribeBatches(google.protobuf.Empty) returns (stream Batch);
+
+  // Health and performance
+  rpc HealthCheck(google.protobuf.Empty) returns (GhostPlaneHealthResponse);
+  rpc GetPerformanceMetrics(google.protobuf.Empty) returns (PerformanceMetrics);
+}
+
+// L2 Transaction structure
+message L2Transaction {
+  string hash = 1;
+  string from = 2;
+  string to = 3;
+  uint64 value = 4;
+  bytes data = 5;
+  uint64 gas_limit = 6;
+  uint64 gas_price = 7;
+  uint64 nonce = 8;
+  L2TransactionType tx_type = 9;
+  bytes signature = 10;
+  L2TransactionStatus status = 11;
+  uint64 l2_block_number = 12;
+  string l2_block_hash = 13;
+  uint64 gas_used = 14;
+  repeated L2Event events = 15;
+  uint64 timestamp = 16;
+  string batch_id = 17;
+}
+
+// L2 Block structure
+message L2Block {
+  string hash = 1;
+  uint64 number = 2;
+  string parent_hash = 3;
+  uint64 timestamp = 4;
+  string proposer = 5;
+  repeated L2Transaction transactions = 6;
+  string state_root = 7;
+  uint64 gas_used = 8;
+  uint64 gas_limit = 9;
+  string batch_id = 10;
+  bool is_finalized = 11;
+}
+
+// L2 Event structure
+message L2Event {
+  string address = 1;
+  repeated string topics = 2;
+  bytes data = 3;
+  uint64 l2_block_number = 4;
+  string transaction_hash = 5;
+  uint32 log_index = 6;
+}
+
+// Batch structure for L1 commitment
+message Batch {
+  string batch_id = 1;
+  repeated string transaction_hashes = 2;
+  string merkle_root = 3;
+  bytes zk_proof = 4;
+  string l1_commitment_hash = 5;
+  uint64 created_at = 6;
+  uint64 finalized_at = 7;
+  BatchStatus status = 8;
+  uint64 l1_block_number = 9;
+  uint32 transaction_count = 10;
+}
+
+// L2 state information
+message L2StateInfo {
+  uint64 current_block = 1;
+  uint32 pending_transactions = 2;
+  uint32 finalized_batches = 3;
+  uint64 total_transactions = 4;
+  uint64 total_value_locked = 5;
+  map<string, string> metadata = 6;
+}
+
+// Bridge status
+message BridgeStatus {
+  bool is_operational = 1;
+  uint64 l1_block_number = 2;
+  uint64 l2_block_number = 3;
+  uint32 pending_deposits = 4;
+  uint32 pending_withdrawals = 5;
+  uint64 total_deposits = 6;
+  uint64 total_withdrawals = 7;
+  map<string, string> metadata = 8;
+}
+
+// Performance metrics
+message PerformanceMetrics {
+  uint64 transactions_per_second = 1;
+  uint64 average_block_time_ms = 2;
+  uint64 average_gas_price = 3;
+  uint32 active_connections = 4;
+  uint64 memory_usage_bytes = 5;
+  double cpu_usage_percent = 6;
+  uint64 uptime_seconds = 7;
+  map<string, uint64> counters = 8;
+}
+
+// Request messages
+message SubmitL2TransactionRequest {
+  L2Transaction transaction = 1;
+  bool wait_for_inclusion = 2;
+  uint32 timeout_ms = 3;
+}
+
+message SubmitL2TransactionResponse {
+  string transaction_hash = 1;
+  bool accepted = 2;
+  string error_message = 3;
+  uint64 l2_block_number = 4;  // If wait_for_inclusion = true
+}
+
+message GetL2TransactionRequest {
+  string hash = 1;
+}
+
+message GetL2TransactionStatusRequest {
+  string hash = 1;
+}
+
+message L2TransactionStatusInfo {
+  string hash = 1;
+  L2TransactionStatus status = 2;
+  uint64 l2_block_number = 3;
+  string batch_id = 4;
+  bool is_finalized = 5;
+  string error_message = 6;
+}
+
+message GetL2BlockRequest {
+  oneof identifier {
+    uint64 number = 1;
+    string hash = 2;
+  }
+  bool include_transactions = 3;
+}
+
+message GetL2StateRequest {
+  string address = 1;
+  repeated string storage_keys = 2;
+}
+
+message L2StateResponse {
+  string address = 1;
+  uint64 balance = 2;
+  uint64 nonce = 3;
+  bytes code = 4;
+  map<string, bytes> storage = 5;
+}
+
+message QueryL2StorageRequest {
+  string contract_address = 1;
+  string storage_key = 2;
+  uint64 block_number = 3;  // 0 for latest
+}
+
+message QueryL2StorageResponse {
+  bytes value = 1;
+  uint64 block_number = 2;
+}
+
+message CreateBatchRequest {
+  repeated string transaction_hashes = 1;
+  bool generate_proof = 2;
+}
+
+message CreateBatchResponse {
+  string batch_id = 1;
+  string merkle_root = 2;
+  uint32 transaction_count = 3;
+  bool success = 4;
+  string error_message = 5;
+}
+
+message GetBatchRequest {
+  string batch_id = 1;
+}
+
+message FinalizeBatchRequest {
+  string batch_id = 1;
+  bytes zk_proof = 2;
+  bool submit_to_l1 = 3;
+}
+
+message FinalizeBatchResponse {
+  string batch_id = 1;
+  string l1_commitment_hash = 2;
+  uint64 l1_block_number = 3;
+  bool success = 4;
+  string error_message = 5;
+}
+
+message GenerateProofRequest {
+  string batch_id = 1;
+  ProofType proof_type = 2;
+}
+
+message GenerateProofResponse {
+  bytes proof = 1;
+  bytes public_inputs = 2;
+  string proof_id = 3;
+  bool success = 4;
+  string error_message = 5;
+  uint64 generation_time_ms = 6;
+}
+
+message VerifyProofRequest {
+  bytes proof = 1;
+  bytes public_inputs = 2;
+  ProofType proof_type = 3;
+}
+
+message VerifyProofResponse {
+  bool is_valid = 1;
+  string error_message = 2;
+  uint64 verification_time_ms = 3;
+}
+
+message DepositFromL1Request {
+  string l1_transaction_hash = 1;
+  string recipient = 2;
+  uint64 amount = 3;
+  bytes proof = 4;
+}
+
+message DepositFromL1Response {
+  string l2_transaction_hash = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message WithdrawToL1Request {
+  string from = 1;
+  string to = 2;
+  uint64 amount = 3;
+  bytes signature = 4;
+}
+
+message WithdrawToL1Response {
+  string withdrawal_id = 1;
+  string l2_transaction_hash = 2;
+  bool success = 3;
+  string error_message = 4;
+  uint64 challenge_period_end = 5;
+}
+
+message GetBridgeStatusRequest {
+  string user_address = 1;  // Optional: filter by user
+}
+
+message L2TransactionSubscription {
+  repeated string addresses = 1;
+  repeated L2TransactionType tx_types = 2;
+}
+
+message GhostPlaneHealthResponse {
+  string status = 1;
+  string version = 2;
+  uint64 uptime_seconds = 3;
+  uint64 last_l2_block = 4;
+  uint64 last_finalized_batch = 5;
+  bool zig_bridge_operational = 6;
+  map<string, string> metadata = 7;
+}
+
+// Enumerations
+enum L2TransactionType {
+  L2_TRANSACTION_TYPE_UNSPECIFIED = 0;
+  L2_TRANSACTION_TYPE_TRANSFER = 1;
+  L2_TRANSACTION_TYPE_CONTRACT_CALL = 2;
+  L2_TRANSACTION_TYPE_CONTRACT_DEPLOY = 3;
+  L2_TRANSACTION_TYPE_DEPOSIT = 4;
+  L2_TRANSACTION_TYPE_WITHDRAWAL = 5;
+}
+
+enum L2TransactionStatus {
+  L2_TRANSACTION_STATUS_UNSPECIFIED = 0;
+  L2_TRANSACTION_STATUS_PENDING = 1;
+  L2_TRANSACTION_STATUS_INCLUDED = 2;
+  L2_TRANSACTION_STATUS_FINALIZED = 3;
+  L2_TRANSACTION_STATUS_FAILED = 4;
+}
+
+
+enum BatchStatus {
+  BATCH_STATUS_UNSPECIFIED = 0;
+  BATCH_STATUS_CREATED = 1;
+  BATCH_STATUS_PROOF_GENERATING = 2;
+  BATCH_STATUS_PROOF_GENERATED = 3;
+  BATCH_STATUS_SUBMITTED_TO_L1 = 4;
+  BATCH_STATUS_FINALIZED = 5;
+  BATCH_STATUS_FAILED = 6;
+}
+
+enum ProofType {
+  PROOF_TYPE_UNSPECIFIED = 0;
+  PROOF_TYPE_GROTH16 = 1;
+  PROOF_TYPE_PLONK = 2;
+  PROOF_TYPE_STARK = 3;
+}

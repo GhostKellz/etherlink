@@ -1,0 +1,241 @@
+syntax = "proto3";
+
+package cns.v1;
+
+import "google/protobuf/empty.proto";
+
+// CNS (Cryptographic Name Service) gRPC API
+service CNSService {
+  // Resolve domain to records and metadata
+  rpc ResolveDomain(CNSResolveRequest) returns (CNSResolveResponse);
+
+  // Register a new domain
+  rpc RegisterDomain(CNSRegisterRequest) returns (CNSRegisterResponse);
+
+  // Update domain records
+  rpc UpdateDomainRecords(CNSUpdateRequest) returns (CNSUpdateResponse);
+
+  // Transfer domain ownership
+  rpc TransferDomain(CNSTransferRequest) returns (CNSTransferResponse);
+
+  // Renew domain registration
+  rpc RenewDomain(CNSRenewRequest) returns (CNSRenewResponse);
+
+  // Check domain availability
+  rpc CheckAvailability(CNSAvailabilityRequest) returns (CNSAvailabilityResponse);
+
+  // Subscribe to domain changes (streaming)
+  rpc SubscribeDomainChanges(CNSDomainSubscription) returns (stream CNSDomainChangeEvent);
+
+  // Get domain history
+  rpc GetDomainHistory(CNSHistoryRequest) returns (CNSHistoryResponse);
+
+  // Health check
+  rpc HealthCheck(google.protobuf.Empty) returns (CNSHealthResponse);
+}
+
+// Domain resolution request
+message CNSResolveRequest {
+  string domain = 1;
+  repeated string record_types = 2;  // A, AAAA, CNAME, TXT, etc.
+  bool include_metadata = 3;
+  bool use_cache = 4;
+  uint32 max_ttl = 5;
+  CNSResolverConfig resolver_config = 6;
+}
+
+// Domain resolution response
+message CNSResolveResponse {
+  string domain = 1;
+  string owner_address = 2;
+  repeated DnsRecord records = 3;
+  map<string, string> metadata = 4;
+  uint64 expires_at = 5;
+  ServiceType service_type = 6;
+  string blockchain_address = 7;
+  string ipfs_hash = 8;
+  string web5_did = 9;
+  bool from_cache = 10;
+  uint32 ttl_seconds = 11;
+}
+
+// Domain registration request
+message CNSRegisterRequest {
+  string domain = 1;
+  string owner_address = 2;
+  repeated DnsRecord initial_records = 3;
+  map<string, string> metadata = 4;
+  uint64 expiry_timestamp = 5;
+  bytes signature = 6;
+  CNSRegistrationOptions options = 7;
+}
+
+// Domain registration response
+message CNSRegisterResponse {
+  string transaction_hash = 1;
+  string domain = 2;
+  uint64 registration_timestamp = 3;
+  uint64 expiry_timestamp = 4;
+  uint64 cost_amount = 5;
+  string cost_token = 6;
+  bool success = 7;
+  string error_message = 8;
+}
+
+// Update domain records request
+message CNSUpdateRequest {
+  string domain = 1;
+  string owner_address = 2;
+  repeated DnsRecord records = 3;
+  map<string, string> metadata_updates = 4;
+  bytes signature = 5;
+}
+
+// Update domain records response
+message CNSUpdateResponse {
+  string transaction_hash = 1;
+  bool success = 2;
+  string error_message = 3;
+  uint64 update_timestamp = 4;
+}
+
+// Transfer domain ownership request
+message CNSTransferRequest {
+  string domain = 1;
+  string current_owner = 2;
+  string new_owner = 3;
+  bytes signature = 4;
+}
+
+// Transfer domain ownership response
+message CNSTransferResponse {
+  string transaction_hash = 1;
+  bool success = 2;
+  string error_message = 3;
+  uint64 transfer_timestamp = 4;
+}
+
+// Renew domain registration request
+message CNSRenewRequest {
+  string domain = 1;
+  string owner_address = 2;
+  uint32 years = 3;
+  uint64 payment_amount = 4;
+  string payment_token = 5;
+  bytes signature = 6;
+}
+
+// Renew domain registration response
+message CNSRenewResponse {
+  string transaction_hash = 1;
+  uint64 new_expiry_timestamp = 2;
+  bool success = 3;
+  string error_message = 4;
+}
+
+// Check domain availability request
+message CNSAvailabilityRequest {
+  string domain = 1;
+}
+
+// Check domain availability response
+message CNSAvailabilityResponse {
+  string domain = 1;
+  bool available = 2;
+  string reason = 3;
+  uint64 expiry_timestamp = 4;  // If not available, when it expires
+  uint64 estimated_cost = 5;    // Estimated cost to register
+  string cost_token = 6;
+}
+
+// Domain subscription for real-time updates
+message CNSDomainSubscription {
+  repeated string domains = 1;
+  repeated string record_types = 2;
+  bool include_metadata = 3;
+}
+
+// Domain change event (streaming)
+message CNSDomainChangeEvent {
+  string domain = 1;
+  ChangeEventType event_type = 2;
+  uint64 timestamp = 3;
+  string old_value = 4;
+  string new_value = 5;
+  string transaction_hash = 6;
+  map<string, string> metadata = 7;
+}
+
+// Domain history request
+message CNSHistoryRequest {
+  string domain = 1;
+  uint64 from_timestamp = 2;
+  uint64 to_timestamp = 3;
+  uint32 limit = 4;
+}
+
+// Domain history response
+message CNSHistoryResponse {
+  string domain = 1;
+  repeated CNSDomainChangeEvent events = 2;
+  bool has_more = 3;
+  string next_cursor = 4;
+}
+
+// Health check response
+message CNSHealthResponse {
+  string status = 1;
+  string version = 2;
+  uint64 uptime_seconds = 3;
+  uint64 total_domains = 4;
+  uint64 total_queries = 5;
+  map<string, string> metadata = 6;
+}
+
+// DNS record
+message DnsRecord {
+  string record_type = 1;  // A, AAAA, CNAME, TXT, etc.
+  string value = 2;
+  uint32 ttl = 3;
+  uint32 priority = 4;     // For MX records
+  uint32 weight = 5;       // For SRV records
+  uint32 port = 6;         // For SRV records
+}
+
+// Service type enumeration
+enum ServiceType {
+  SERVICE_TYPE_UNSPECIFIED = 0;
+  SERVICE_TYPE_BLOCKCHAIN = 1;
+  SERVICE_TYPE_WALLET = 2;
+  SERVICE_TYPE_L2 = 3;
+  SERVICE_TYPE_STORAGE = 4;
+  SERVICE_TYPE_WEB5 = 5;
+  SERVICE_TYPE_BRIDGE = 6;
+}
+
+// Change event type enumeration
+enum ChangeEventType {
+  CHANGE_EVENT_TYPE_UNSPECIFIED = 0;
+  CHANGE_EVENT_TYPE_REGISTERED = 1;
+  CHANGE_EVENT_TYPE_UPDATED = 2;
+  CHANGE_EVENT_TYPE_TRANSFERRED = 3;
+  CHANGE_EVENT_TYPE_EXPIRED = 4;
+  CHANGE_EVENT_TYPE_RENEWED = 5;
+}
+
+// CNS resolver configuration
+message CNSResolverConfig {
+  repeated string upstream_resolvers = 1;
+  bool enable_dnssec = 2;
+  bool enable_ens_bridge = 3;
+  bool enable_unstoppable_bridge = 4;
+  uint32 timeout_ms = 5;
+}
+
+// CNS registration options
+message CNSRegistrationOptions {
+  bool auto_renew = 1;
+  uint32 auto_renew_years = 2;
+  bool enable_privacy_protection = 3;
+  repeated string allowed_updaters = 4;
+}

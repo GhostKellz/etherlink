@@ -2,5 +2,65 @@
 name = "etherlink"
 version = "0.1.0"
 edition = "2024"
+description = "Rust-native bridge and gRPC client for GhostChain's hybrid Rust ↔ Zig ecosystem"
+license = "Apache-2.0"
+repository = "https://github.com/ghostkellz/etherlink"
 
 [dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+tokio-stream = "0.1"
+async-stream = "0.3"
+
+# gRPC and networking
+tonic = { version = "0.12", features = ["tls", "transport"] }
+tonic-build = "0.12"
+prost = "0.13"
+
+# QUIC implementations
+quinn = { version = "0.11", optional = true }
+quiche = { version = "0.23", optional = true }
+
+# HTTP/3 and transport (disabled for now due to compatibility issues)
+# h3 = "0.0.6"
+# h3-quinn = "0.0.7"
+
+# Serialization and data handling
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bytes = "1.0"
+
+# Error handling and logging
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# FFI and C interop for Zig bridge
+libc = "0.2"
+
+# Crypto (placeholder for gcrypt integration)
+sha2 = "0.10"
+ed25519-dalek = "2.0"
+
+# Config and utilities
+config = "0.14"
+uuid = { version = "1.0", features = ["v4"] }
+hex = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+
+[build-dependencies]
+tonic-build = "0.12"
+
+[features]
+default = ["quic-quinn"]
+quic-quinn = ["quinn"]
+quic-quiche = ["quiche"]
+
+[lib]
+name = "etherlink"
+path = "src/lib.rs"
+
+[[bin]]
+name = "etherlink"
+path = "src/main.rs"
