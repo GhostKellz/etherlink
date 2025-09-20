@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="assets/etherlink-logo.png" alt="Etherlink Logo" width="300"/>
+</div>
+
 # Etherlink - GhostChain Rust Client SDK
 
 A high-performance Rust client SDK for the GhostChain ecosystem, providing secure and efficient communication with all GhostChain services using GQUIC transport and comprehensive authentication.
